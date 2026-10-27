@@ -1,0 +1,526 @@
+{
+  "version": "x402-nonce/1",
+  "status": "DRAFT for review",
+  "constants": {
+    "compose_tag": "x402-nonce/1\\n",
+    "binding_tag": "x402-mandate-binding/1\\n",
+    "anchored_payment_id_prefix": "x402n_"
+  },
+  "notes": [
+    "authority = B per x402 PR #3220 section 7 at 72c3704; nc-01 equals that PR's published model A value.",
+    "resource = keccak256(UTF8(resource) || salt) with a 32-byte salt. ILLUSTRATIVE: issue #3226 has not fixed the encoding, the salt length or where the salt is published.",
+    "r3 = the paymentId matches ^[A-Za-z0-9_-]{16,64}$, the overlap of #3220's grammar and the payment-identifier extension's. Informative: it is a proposed tightening, not part of either text yet.",
+    "All other bytes derive from SHA-256('x402-nonce-composition-vectors:' + label). Test values; they hold nothing."
+  ],
+  "verdicts": {
+    "authority": [
+      "bound",
+      "binding_mismatch",
+      "composed_authority"
+    ],
+    "resource": [
+      "bound",
+      "member_absent",
+      "member_mismatch",
+      "opening_mismatch",
+      "malformed_opening",
+      "indeterminate"
+    ]
+  },
+  "vectors": [
+    {
+      "id": "nc-01-bare-authority-3220",
+      "description": "Mandate only, paymentId pay-001: the slot is #3220's published model A B. pay-001 is inside #3220's grammar but under the payment-identifier extension's 16-character minimum (R3).",
+      "scheme": "eip3009",
+      "slot": "0x5aa71c23c84e6763bdb31a473f1981fd37ccf93945205b77eb84e0c271c1e74b",
+      "opening": null,
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "pay-001"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "indeterminate",
+        "r3": false
+      }
+    },
+    {
+      "id": "nc-02-bare-resource",
+      "description": "No mandate, resource binding alone: the slot is the #3226 value exactly.",
+      "scheme": "eip3009",
+      "slot": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675",
+      "opening": null,
+      "mandate_context": null,
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "resource": "bound"
+      }
+    },
+    {
+      "id": "nc-03-anchored-eip3009",
+      "description": "Mandate plus resource: slot = B, the resource member is composed into the paymentId.",
+      "scheme": "eip3009",
+      "slot": "0xb9b0d94d4986f010b43c9fb8075dbced28a218986602b45736208a4848d75e59",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_EblQwucrBggbWFTi-D1L5BZeRVl_Utg5OHNIE1Yeg3Y"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "bound",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-04-anchored-permit2",
+      "description": "Same payment, Permit2 encoding (big-endian uint256, decimal).",
+      "scheme": "permit2",
+      "slot": "83990341833921731878471346255803887707967743612525321558856100018654304231001",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_EblQwucrBggbWFTi-D1L5BZeRVl_Utg5OHNIE1Yeg3Y"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "bound",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-05-anchored-xrpl",
+      "description": "Same payment, XRPL InvoiceID encoding (uppercase hex).",
+      "scheme": "xrpl",
+      "slot": "B9B0D94D4986F010B43C9FB8075DBCED28A218986602B45736208A4848D75E59",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_EblQwucrBggbWFTi-D1L5BZeRVl_Utg5OHNIE1Yeg3Y"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "bound",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-06-anchored-with-entropy",
+      "description": "Anchored resource and entropy members.",
+      "scheme": "eip3009",
+      "slot": "0xc687bd32360e83a96dad77e11435b439b80377c69b80b2e9ef1273eeae18142d",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "entropy": "0x6e0d7fb7d509e3b048df78ac2c8228bf4ac375092641d8b8941f02120beaf79c",
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_BloW3S9jiqDl6oxyjoQOdAJBltmeE7xA-KSjOGaWTVU"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "bound",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-07-anchored-unknown-member",
+      "description": "An unregistered member is opaque to this verifier but still hashed.",
+      "scheme": "eip3009",
+      "slot": "0x7be329373519759419685736eba1f43adbe5244e8643ddfb612c1104d061b3f0",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675",
+          "x-example": "0x5b7eaaa32e43cbce14ee13ec0a5d35ed6e131c6d579ebe8d9cfc18c02fea12be"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_7As54Ivku0Fbgy4Jd99NYa-qkDzR_A1Q6m9K247S_bQ"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "bound",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-08-flat-attack-refused-R1",
+      "description": "The agent composes the mandate binding flat with a resource member. R1: the authority verifier accepts only slot = B, so this is refused; an opening holding an authority member is malformed for every verifier.",
+      "scheme": "eip3009",
+      "slot": "0xc45cee4a4cb146d29df42ed2c632ad5f6abe02c619e1f1e53c4e0c3248b883c5",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "authority": "0xbfda2ad0b168e4d9ff8682a953c652deb41298e077d0b5f64fa24b986b08085e",
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "pay_7d5d747be160e280504c099d984bcfe0"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "composed_authority",
+        "resource": "malformed_opening",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-09-anchored-opening-altered",
+      "description": "Opening presented with another resource value than the paymentId commits to. The authority check does not read the opening and still binds.",
+      "scheme": "eip3009",
+      "slot": "0xb9b0d94d4986f010b43c9fb8075dbced28a218986602b45736208a4848d75e59",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "resource": "0x284ea1c51869044eca9e7a96ffacf54dcb38ba389fec125970fe80fb4ad8ab67"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_EblQwucrBggbWFTi-D1L5BZeRVl_Utg5OHNIE1Yeg3Y"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "opening_mismatch",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-10-plain-payment-id",
+      "description": "A plain random paymentId with an opening presented beside it: the paymentId does not decompose to that opening.",
+      "scheme": "eip3009",
+      "slot": "0xbfda2ad0b168e4d9ff8682a953c652deb41298e077d0b5f64fa24b986b08085e",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "pay_7d5d747be160e280504c099d984bcfe0"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "opening_mismatch",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-11-anchored-member-mismatch",
+      "description": "The paymentId composes a resource member for another resource.",
+      "scheme": "eip3009",
+      "slot": "0xf65617efece61e5a22864f85bd4ca797965749d3221eae91838167e1fe6a950d",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "resource": "0x284ea1c51869044eca9e7a96ffacf54dcb38ba389fec125970fe80fb4ad8ab67"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_YwImVueJU190QCN8tt47Pm7mEwSQvJ_W32Nj_HPoc-8"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "member_mismatch",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-12-anchored-member-absent",
+      "description": "The paymentId composes only an entropy member.",
+      "scheme": "eip3009",
+      "slot": "0xc2c2ce07a4b3f652bed917e345e5ee23eb5a5a7178803b99d4b5effa182af9e4",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "entropy": "0x6e0d7fb7d509e3b048df78ac2c8228bf4ac375092641d8b8941f02120beaf79c"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_F1_A4L01-XNv1qZmlQ4CpZgBqN5kZ5iqFpbZGCj1Uzc"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "member_absent",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-13-flat-no-mandate",
+      "description": "No mandate: resource and entropy composed flat into the slot.",
+      "scheme": "eip3009",
+      "slot": "0x065a16dd2f638aa0e5ea8c728e840e74024196d99e13bc40f8a4a33866964d55",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "entropy": "0x6e0d7fb7d509e3b048df78ac2c8228bf4ac375092641d8b8941f02120beaf79c",
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": null,
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "resource": "bound"
+      }
+    },
+    {
+      "id": "nc-14-flat-single-member",
+      "description": "A flat composition of one member is malformed: one member uses the bare form.",
+      "scheme": "eip3009",
+      "slot": "0x11b950c2e72b06081b5854e2f83d4be4165e45597f52d83938734813561e8376",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": null,
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "resource": "malformed_opening"
+      }
+    },
+    {
+      "id": "nc-15-uppercase-member-value",
+      "description": "Member values are 0x plus 64 lowercase hex; uppercase is refused, not normalised.",
+      "scheme": "eip3009",
+      "slot": "0x0a0717b033891dde936338eadfdff79ce122129520aef8c1a92e73c1f4bb2914",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "entropy": "0x6e0d7fb7d509e3b048df78ac2c8228bf4ac375092641d8b8941f02120beaf79c",
+          "resource": "0x1BE364D4CB5CB9BAD2A55C962BEE25D671C522D1F498E323B51D075786F2C675"
+        }
+      },
+      "mandate_context": null,
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "resource": "malformed_opening"
+      }
+    },
+    {
+      "id": "nc-16-wrong-version",
+      "description": "Opening carries an unregistered version string.",
+      "scheme": "eip3009",
+      "slot": "0xb9b0d94d4986f010b43c9fb8075dbced28a218986602b45736208a4848d75e59",
+      "opening": {
+        "v": "x402-nonce/2",
+        "members": {
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_EblQwucrBggbWFTi-D1L5BZeRVl_Utg5OHNIE1Yeg3Y"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "malformed_opening",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-17-opening-withheld",
+      "description": "Anchored payment, opening not presented: resource is indeterminate; authority binds.",
+      "scheme": "eip3009",
+      "slot": "0xb9b0d94d4986f010b43c9fb8075dbced28a218986602b45736208a4848d75e59",
+      "opening": null,
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_EblQwucrBggbWFTi-D1L5BZeRVl_Utg5OHNIE1Yeg3Y"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "bound",
+        "resource": "indeterminate",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-18-random-nonce-with-mandate",
+      "description": "A mandate is presented but the slot is a random nonce: #3220 section 7 binding mismatch; the resource binding is indeterminate.",
+      "scheme": "eip3009",
+      "slot": "0xb37066ec6400c1933117a1770fb1fc26670afea14adc9be20a50e465621da317",
+      "opening": null,
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "pay_7d5d747be160e280504c099d984bcfe0"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "binding_mismatch",
+        "resource": "indeterminate",
+        "r3": true
+      }
+    },
+    {
+      "id": "nc-20-anchored-id-not-signed",
+      "description": "The paymentId decomposes to the opening, but the slot is not B for it: the resource commitment never entered the signed slot.",
+      "scheme": "eip3009",
+      "slot": "0xb37066ec6400c1933117a1770fb1fc26670afea14adc9be20a50e465621da317",
+      "opening": {
+        "v": "x402-nonce/1",
+        "members": {
+          "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+        }
+      },
+      "mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "x402n_EblQwucrBggbWFTi-D1L5BZeRVl_Utg5OHNIE1Yeg3Y"
+      },
+      "resource_inputs": {
+        "resource": "https://api.example.com/v1/rows/42",
+        "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+      },
+      "expect": {
+        "authority": "binding_mismatch",
+        "resource": "opening_mismatch",
+        "r3": true
+      }
+    }
+  ],
+  "reuse_vectors": [
+    {
+      "id": "nc-19-reuse",
+      "description": "Same mandate. Anchored payments a and b vary the resource member; a2 retries a with the same members.",
+      "anchored": {
+        "a": {
+          "members": {
+            "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+          },
+          "paymentId": "x402n_EblQwucrBggbWFTi-D1L5BZeRVl_Utg5OHNIE1Yeg3Y",
+          "slot": "0xb9b0d94d4986f010b43c9fb8075dbced28a218986602b45736208a4848d75e59"
+        },
+        "a2": {
+          "members": {
+            "resource": "0x1be364d4cb5cb9bad2a55c962bee25d671c522d1f498e323b51d075786f2c675"
+          },
+          "paymentId": "x402n_EblQwucrBggbWFTi-D1L5BZeRVl_Utg5OHNIE1Yeg3Y",
+          "slot": "0xb9b0d94d4986f010b43c9fb8075dbced28a218986602b45736208a4848d75e59"
+        },
+        "b": {
+          "members": {
+            "resource": "0x284ea1c51869044eca9e7a96ffacf54dcb38ba389fec125970fe80fb4ad8ab67"
+          },
+          "paymentId": "x402n_YwImVueJU190QCN8tt47Pm7mEwSQvJ_W32Nj_HPoc-8",
+          "slot": "0xf65617efece61e5a22864f85bd4ca797965749d3221eae91838167e1fe6a950d"
+        }
+      },
+      "flat_attack": [
+        "0xc45cee4a4cb146d29df42ed2c632ad5f6abe02c619e1f1e53c4e0c3248b883c5",
+        "0x642d71135bdc780bc548def99ea513f52ab79ad5531a7d52defdd4548a1a4ddf"
+      ],
+      "expect": {
+        "a_equals_a2": true,
+        "a_differs_b": true,
+        "paymentIds_differ_ab": true,
+        "flat_slots_differ": true,
+        "flat_each_authority": "composed_authority"
+      },
+      "flat_mandate_context": {
+        "mandateDigest": "sha256:445fed871d7c43d2b775e68124103c77646fc0f096fb42c9ea3d9f00c960ca05",
+        "paymentId": "pay_7d5d747be160e280504c099d984bcfe0"
+      },
+      "flat_resource_inputs": [
+        {
+          "resource": "https://api.example.com/v1/rows/42",
+          "salt": "0x579f2636eb7c41ab5bd922c8378474a1a84b7c70075ee185d3d459f8f829d59b"
+        },
+        {
+          "resource": "https://api.example.com/v1/rows/43",
+          "salt": "0xde65335083dff07ff3e8d2e500f929764f8f6e5934058b6c57e40d462e08f48b"
+        }
+      ]
+    }
+  ]
+}
